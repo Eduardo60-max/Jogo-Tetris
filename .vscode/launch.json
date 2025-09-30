@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "request": "launch",
+            "name": "Rodar Tetris Swing",
+            "mainClass": "tetristela.janelaJogo",
+            // Adicione a pasta raiz do projeto, se necessário:
+            "projectName": "Tetris" // <--- Coloque o nome da pasta principal do seu projeto aqui
+        }
+    ]
+}
