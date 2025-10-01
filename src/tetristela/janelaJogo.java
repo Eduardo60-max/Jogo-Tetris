@@ -16,7 +16,7 @@ public static final int largura = 445, altura = 629;
 	  
 	  jogo = new jogo();
 	  janela.add(jogo);
-	  
+	  janela.addKeyListener(jogo);
 	  
 	  
 	  janela.setVisible(true);
