@@ -160,5 +160,9 @@ public class jogo extends JPanel implements KeyListener {
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {}
+    @Override
+public void keyTyped(KeyEvent e) {
+    
+}
+
 }

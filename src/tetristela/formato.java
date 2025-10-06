@@ -145,5 +145,5 @@ public int getY() {
     // verifica se colidiu
     public boolean hasColisao() {
         return colisao;
-    }
+}
 }
