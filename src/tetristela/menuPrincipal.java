@@ -120,6 +120,7 @@ public class menuPrincipal extends JPanel {
             "← SETA ESQUERDA: Mover para esquerda\n" +
             "→ SETA DIREITA: Mover para direita\n" +
             "↓ SETA BAIXO: Acelerar queda\n" +
+            "↑ SETA CIMA: Rotacionar peça\n" +
             "ESC: Voltar ao menu\n\n" +
             "OBJETIVO:\n" +
             "• Complete linhas horizontais\n" +

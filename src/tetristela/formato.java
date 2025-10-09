@@ -19,14 +19,12 @@ public class formato {
     private int[][] coords;
     private Color color;
 
-   
     public formato(int[][] coords, jogo board, Color color) {
         this.coords = coords;
         this.board = board;
         this.color = (color != null) ? color : Color.red;
         this.passarTempo = System.currentTimeMillis();
     }
-
 
     public void setx(int x) {
         this.x = x;
@@ -36,29 +34,67 @@ public class formato {
         this.y = y;
     }
    
-public int[][] getCoords() {
-    return coords;
-}
+    public int[][] getCoords() {
+        return coords;
+    }
 
+    public Color getColor() {
+        return color;
+    }
 
-public Color getColor() {
-    return color;
-}
+    public int getX() {
+        return x;
+    }
 
+    public int getY() {
+        return y;
+    }
 
-public int getX() {
-    return x;
-}
+    // ROTACIONA A PEÇA
+    public void rotacionar() {
+        int[][] novaCoords = new int[coords[0].length][coords.length];
+        
+        // TRANSPÕE A MATRIZ (rotação 90 graus)
+        for (int i = 0; i < coords.length; i++) {
+            for (int j = 0; j < coords[0].length; j++) {
+                novaCoords[j][coords.length - 1 - i] = coords[i][j];
+            }
+        }
+        
+        // VERIFICA SE A ROTAÇÃO É VÁLIDA
+        if (!verificarColisao(novaCoords, x, y)) {
+            coords = novaCoords;
+        }
+    }
 
-
-public int getY() {
-    return y;
-}
+    // VERIFICA COLISÃO PARA ROTAÇÃO
+    private boolean verificarColisao(int[][] coordsParaVerificar, int novoX, int novoY) {
+        Color[][] tabuleiro = board.getBoard();
+        for (int row = 0; row < coordsParaVerificar.length; row++) {
+            for (int col = 0; col < coordsParaVerificar[0].length; col++) {
+                if (coordsParaVerificar[row][col] != 0) {
+                    int boardX = novoX + col;
+                    int boardY = novoY + row;
+                    
+                    // VERIFICA LIMITES
+                    if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
+                        return true;
+                    }
+                    
+                    // VERIFICA COLISÃO COM OUTRAS PEÇAS
+                    if (boardY >= 0 && tabuleiro[boardY][boardX] != null) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     // atualiza a posição da peça
     public void update() {
         if (colisao) {
-           
+            // FIXA A PEÇA NO TABULEIRO
             Color[][] tabuleiro = board.getBoard();
             for (int row = 0; row < coords.length; row++) {
                 for (int col = 0; col < coords[0].length; col++) {
@@ -69,18 +105,24 @@ public int getY() {
                     }
                 }
             }
-            // cria nova peça
+            
+            // LIMPA LINHAS COMPLETAS
+            board.clearLines();
+            
+            // CRIA NOVA PEÇA
             board.setCurrentShape();
             return;
         }
 
-        // movimento horizontal
+        // MOVIMENTO HORIZONTAL
         if (!(x + deltaX + coords[0].length > BOARD_WIDTH) && !(x + deltaX < 0)) {
-            x += deltaX;
+            if (!verificarColisao(coords, x + deltaX, y)) {
+                x += deltaX;
+            }
         }
         deltaX = 0;
 
-        // queda automática e ve colisao
+        // QUEDA AUTOMÁTICA E VERIFICA COLISÃO
         if (System.currentTimeMillis() - passarTempo > delayTempoDeMovimento) {
             if (!colideAbaixo()) {
                 y++;
@@ -91,26 +133,10 @@ public int getY() {
         }
     }
 
-    // verifica colisão abaixo
+    // VERIFICA COLISÃO ABAIXO
     private boolean colideAbaixo() {
-        Color[][] tabuleiro = board.getBoard();
-        for (int row = 0; row < coords.length; row++) {
-            for (int col = 0; col < coords[0].length; col++) {
-                if (coords[row][col] != 0) {
-                    int novoY = y + row + 1;
-                    int novoX = x + col;
-                    if (novoY >= BOARD_HEIGHT) {
-                        return true; 
-                    }
-                    if (novoY >= 0 && tabuleiro[novoY][novoX] != null) {
-                        return true; 
-                    }
-                }
-            }
-        }
-        return false;
+        return verificarColisao(coords, x, y + 1);
     }
-
     
     public void render(Graphics g) {
         g.setColor(color);
@@ -123,6 +149,16 @@ public int getY() {
                         BLOCK_SIZE,
                         BLOCK_SIZE
                     );
+                    
+                    // BORDA NA PEÇA ATUAL
+                    g.setColor(Color.WHITE);
+                    g.drawRect(
+                        (x + col) * BLOCK_SIZE,
+                        (y + row) * BLOCK_SIZE,
+                        BLOCK_SIZE,
+                        BLOCK_SIZE
+                    );
+                    g.setColor(color);
                 }
             }
         }
@@ -145,5 +181,5 @@ public int getY() {
     // verifica se colidiu
     public boolean hasColisao() {
         return colisao;
-}
+    }
 }

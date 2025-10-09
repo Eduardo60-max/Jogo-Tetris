@@ -1,6 +1,7 @@
 package tetristela;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.*;
 import java.util.Random;
@@ -21,6 +22,12 @@ public class jogo extends JPanel implements KeyListener {
     private Timer tempo;
     private Color[][] board = new Color[BOARD_HEIGHT][BOARD_WIDTH];
 
+    // SISTEMA DE PONTUAÇÃO
+    private int score = 0;
+    private int level = 1;
+    private int linesCleared = 0;
+    private boolean gameOver = false;
+
     private Color[] colors = {
         Color.decode("#ed1c24"),
         Color.decode("#ff7f27"),
@@ -36,7 +43,7 @@ public class jogo extends JPanel implements KeyListener {
     private formato currentShape;
 
     public jogo() {
-        System.out.println("✅ Construtor do jogo chamado!"); // DEBUG
+        System.out.println("✅ Construtor do jogo chamado!");
         
         // cria as formas
         shapes[0] = new formato(new int[][]{
@@ -84,8 +91,6 @@ public class jogo extends JPanel implements KeyListener {
             repaint();
         });
         tempo.start();
-        
-        System.out.println("✅ Jogo inicializado e timer iniciado!"); // DEBUG
     }
 
     // gera uma nova peça aleatória
@@ -96,13 +101,84 @@ public class jogo extends JPanel implements KeyListener {
 	}
 
     private void update() {
-        System.out.println("✅ Update do jogo rodando! - " + System.currentTimeMillis()); // DEBUG
-        
+        if (gameOver) {
+            return;
+        }
+
         if (currentShape == null) {
 			return;
 		}
 
         currentShape.update();
+        
+        // VERIFICA GAME OVER
+        checkGameOver();
+    }
+
+    // VERIFICA SE O JOGO ACABOU
+    private void checkGameOver() {
+        for (int col = 0; col < BOARD_WIDTH; col++) {
+            if (board[0][col] != null) {
+                gameOver = true;
+                tempo.stop();
+                System.out.println("🎮 GAME OVER! Pontuação: " + score);
+                break;
+            }
+        }
+    }
+
+    // LIMPA LINHAS COMPLETAS
+    public void clearLines() {
+        int linesRemoved = 0;
+        
+        for (int row = BOARD_HEIGHT - 1; row >= 0; row--) {
+            boolean lineComplete = true;
+            
+            // VERIFICA SE A LINHA ESTÁ COMPLETA
+            for (int col = 0; col < BOARD_WIDTH; col++) {
+                if (board[row][col] == null) {
+                    lineComplete = false;
+                    break;
+                }
+            }
+            
+            // SE COMPLETA, REMOVE A LINHA
+            if (lineComplete) {
+                linesRemoved++;
+                
+                // MOVIMENTA TODAS AS LINHAS ACIMA PARA BAIXO
+                for (int r = row; r > 0; r--) {
+                    for (int col = 0; col < BOARD_WIDTH; col++) {
+                        board[r][col] = board[r-1][col];
+                    }
+                }
+                
+                // LIMPA A LINHA DO TOPO
+                for (int col = 0; col < BOARD_WIDTH; col++) {
+                    board[0][col] = null;
+                }
+                
+                // VOLTA UMA LINHA PARA VERIFICAR NOVAMENTE (pois as linhas desceram)
+                row++;
+            }
+        }
+        
+        // ATUALIZA PONTUAÇÃO
+        if (linesRemoved > 0) {
+            updateScore(linesRemoved);
+            linesCleared += linesRemoved;
+            level = (linesCleared / 10) + 1; // A CADA 10 LINHAS, SOBE NIVEL
+        }
+    }
+
+    // ATUALIZA PONTUAÇÃO
+    private void updateScore(int lines) {
+        switch (lines) {
+            case 1 -> score += 100 * level;
+            case 2 -> score += 300 * level;
+            case 3 -> score += 500 * level;
+            case 4 -> score += 800 * level; // TETRIS!
+        }
     }
 
     // desenha o tabuleiro e a peça atual
@@ -114,12 +190,34 @@ public class jogo extends JPanel implements KeyListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, getWidth(), getHeight());
 
+        // DESENHA INFORMAÇÕES DO JOGO
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 16));
+        g.drawString("Pontuação: " + score, BOARD_WIDTH * BLOCK_SIZE + 10, 30);
+        g.drawString("Linhas: " + linesCleared, BOARD_WIDTH * BLOCK_SIZE + 10, 60);
+        g.drawString("Nível: " + level, BOARD_WIDTH * BLOCK_SIZE + 10, 90);
+        
+        // MENSAGEM DE GAME OVER
+        if (gameOver) {
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 36));
+            g.drawString("GAME OVER", 50, BOARD_HEIGHT * BLOCK_SIZE / 2);
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+            g.drawString("Pontuação Final: " + score, 70, BOARD_HEIGHT * BLOCK_SIZE / 2 + 40);
+            g.drawString("Pressione ESC para voltar", 40, BOARD_HEIGHT * BLOCK_SIZE / 2 + 80);
+            return;
+        }
+
         // desenha peças que ta no tabuleiro
         for (int row = 0; row < BOARD_HEIGHT; row++) {
             for (int col = 0; col < BOARD_WIDTH; col++) {
                 if (board[row][col] != null) {
                     g.setColor(board[row][col]);
                     g.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    
+                    // BORDA NAS PEÇAS
+                    g.setColor(Color.DARK_GRAY);
+                    g.drawRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
                 }
             }
         }
@@ -130,15 +228,13 @@ public class jogo extends JPanel implements KeyListener {
 		 }
 
         // desenha a grade
-        g.setColor(Color.white);
+        g.setColor(Color.GRAY);
         for (int row = 0; row < BOARD_HEIGHT; row++) {
             g.drawLine(0, row * BLOCK_SIZE, BOARD_WIDTH * BLOCK_SIZE, row * BLOCK_SIZE);
         }
         for (int col = 0; col <= BOARD_WIDTH; col++) {
             g.drawLine(col * BLOCK_SIZE, 0, col * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE);
         }
-        
-        System.out.println("✅ Tela do jogo redesenhada!"); // DEBUG
     }
 
     public Color[][] getBoard() {
@@ -148,12 +244,16 @@ public class jogo extends JPanel implements KeyListener {
     // cria nova peça no topo
     public void setCurrentShape() {
         currentShape = gerarNovaPeca();
+        
+        // VERIFICA SE NOVA PEÇA PODE SER COLOCADA (GAME OVER)
+        if (currentShape.hasColisao()) {
+            gameOver = true;
+        }
     }
     
     // VOLTAR AO MENU
     public void voltarAoMenu() {
-        System.out.println("✅ Voltando ao menu..."); // DEBUG
-        tempo.stop(); // Para o timer do jogo
+        tempo.stop();
         
         JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
         frame.getContentPane().removeAll();
@@ -161,21 +261,26 @@ public class jogo extends JPanel implements KeyListener {
         frame.revalidate();
         frame.repaint();
         
-        // Remove este KeyListener para evitar conflitos
         frame.removeKeyListener(this);
     }
 
-    // controles da peça
+    // CONTROLES DA PEÇA
     @Override
     public void keyPressed(KeyEvent e) {
-        System.out.println("✅ Tecla pressionada: " + e.getKeyCode()); // DEBUG
-        
+        if (gameOver) {
+            if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                voltarAoMenu();
+            }
+            return;
+        }
+
         if (currentShape == null) return;
 
         switch (e.getKeyCode()) {
             case KeyEvent.VK_DOWN -> currentShape.speedUp();
             case KeyEvent.VK_RIGHT -> currentShape.moverDi();
             case KeyEvent.VK_LEFT -> currentShape.moverEs();
+            case KeyEvent.VK_UP -> currentShape.rotacionar();
             case KeyEvent.VK_ESCAPE -> voltarAoMenu();
         }
     }
