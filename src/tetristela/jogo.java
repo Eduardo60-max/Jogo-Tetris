@@ -5,7 +5,9 @@ import java.awt.Graphics;
 import java.awt.event.*;
 import java.util.Random;
 import javax.swing.JPanel;
+import javax.swing.JFrame;
 import javax.swing.Timer;
+import javax.swing.SwingUtilities;
 
 public class jogo extends JPanel implements KeyListener {
 
@@ -139,6 +141,20 @@ public class jogo extends JPanel implements KeyListener {
     public void setCurrentShape() {
         currentShape = gerarNovaPeca();
     }
+    
+    //Voltar ao menu
+   public void voltarAoMenu() {
+    tempo.stop();
+    
+    JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+    frame.getContentPane().removeAll();
+    frame.add(new menuPrincipal(frame));
+    frame.revalidate();
+    frame.repaint();
+    
+    frame.removeKeyListener(this);
+}
+
 
     // controles da peça
     @Override
@@ -149,6 +165,7 @@ public class jogo extends JPanel implements KeyListener {
             case KeyEvent.VK_DOWN -> currentShape.speedUp();
             case KeyEvent.VK_RIGHT -> currentShape.moverDi();
             case KeyEvent.VK_LEFT -> currentShape.moverEs();
+            case KeyEvent.VK_ESCAPE -> voltarAoMenu();
         }
     }
 
@@ -160,9 +177,7 @@ public class jogo extends JPanel implements KeyListener {
     }
 
     @Override
-    @Override
-public void keyTyped(KeyEvent e) {
-    
-}
-
+    public void keyTyped(KeyEvent e) {
+        
+    }
 }
