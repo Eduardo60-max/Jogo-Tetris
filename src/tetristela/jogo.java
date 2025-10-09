@@ -5,9 +5,9 @@ import java.awt.Graphics;
 import java.awt.event.*;
 import java.util.Random;
 import javax.swing.JPanel;
-import javax.swing.JFrame;
 import javax.swing.Timer;
 import javax.swing.SwingUtilities;
+import javax.swing.JFrame;
 
 public class jogo extends JPanel implements KeyListener {
 
@@ -36,6 +36,8 @@ public class jogo extends JPanel implements KeyListener {
     private formato currentShape;
 
     public jogo() {
+        System.out.println("✅ Construtor do jogo chamado!"); // DEBUG
+        
         // cria as formas
         shapes[0] = new formato(new int[][]{
             {1,1,1},
@@ -82,6 +84,8 @@ public class jogo extends JPanel implements KeyListener {
             repaint();
         });
         tempo.start();
+        
+        System.out.println("✅ Jogo inicializado e timer iniciado!"); // DEBUG
     }
 
     // gera uma nova peça aleatória
@@ -92,6 +96,8 @@ public class jogo extends JPanel implements KeyListener {
 	}
 
     private void update() {
+        System.out.println("✅ Update do jogo rodando! - " + System.currentTimeMillis()); // DEBUG
+        
         if (currentShape == null) {
 			return;
 		}
@@ -131,6 +137,8 @@ public class jogo extends JPanel implements KeyListener {
         for (int col = 0; col <= BOARD_WIDTH; col++) {
             g.drawLine(col * BLOCK_SIZE, 0, col * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE);
         }
+        
+        System.out.println("✅ Tela do jogo redesenhada!"); // DEBUG
     }
 
     public Color[][] getBoard() {
@@ -142,23 +150,26 @@ public class jogo extends JPanel implements KeyListener {
         currentShape = gerarNovaPeca();
     }
     
-    //Voltar ao menu
-   public void voltarAoMenu() {
-    tempo.stop();
-    
-    JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
-    frame.getContentPane().removeAll();
-    frame.add(new menuPrincipal(frame));
-    frame.revalidate();
-    frame.repaint();
-    
-    frame.removeKeyListener(this);
-}
-
+    // VOLTAR AO MENU
+    public void voltarAoMenu() {
+        System.out.println("✅ Voltando ao menu..."); // DEBUG
+        tempo.stop(); // Para o timer do jogo
+        
+        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        frame.getContentPane().removeAll();
+        frame.add(new menuPrincipal(frame));
+        frame.revalidate();
+        frame.repaint();
+        
+        // Remove este KeyListener para evitar conflitos
+        frame.removeKeyListener(this);
+    }
 
     // controles da peça
     @Override
     public void keyPressed(KeyEvent e) {
+        System.out.println("✅ Tecla pressionada: " + e.getKeyCode()); // DEBUG
+        
         if (currentShape == null) return;
 
         switch (e.getKeyCode()) {
@@ -178,6 +189,6 @@ public class jogo extends JPanel implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {
-        
+        // Não usado
     }
 }
