@@ -9,8 +9,11 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.SwingUtilities;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 public class jogo extends JPanel implements KeyListener {
+
+    private RankingManager rankingManager = new RankingManager();
 
     public static final int BOARD_WIDTH = 10;
     public static final int BOARD_HEIGHT = 20;
@@ -100,32 +103,83 @@ public class jogo extends JPanel implements KeyListener {
         return new formato(coords, this, shapes[i].getColor());
 	}
 
-    private void update() {
-        if (gameOver) {
-            return;
+  private void update() {
+    if (gameOver) {
+
+        if (rankingManager.ehHighScore(score)) {
+            mostrarTelaHighScore();
         }
-
-        if (currentShape == null) {
-			return;
-		}
-
-        currentShape.update();
-        
-        // VERIFICA GAME OVER
-        checkGameOver();
+        return;
     }
+
+    if (currentShape == null) {
+        return;
+    }
+
+    currentShape.update();
+    
+    checkGameOver();
+}
+
+private void mostrarTelaHighScore() {
+    tempo.stop();
+    
+    String iniciais = (String) JOptionPane.showInputDialog(
+        this,
+        " NOVO HIGH SCORE! \n" +
+        "Pontuação: " + score + "\n\n" +
+        "Digite suas 3 iniciais:",
+        "HIGH SCORE - NOVO RECORDE!",
+        JOptionPane.INFORMATION_MESSAGE,
+        null,
+        null,
+        "AAA" 
+    );
+    
+    if (iniciais != null && !iniciais.trim().isEmpty()) {
+
+        if (iniciais.length() > 3) {
+            iniciais = iniciais.substring(0, 3);
+        }
+        iniciais = iniciais.toUpperCase();
+        
+        // Adiciona ao ranking
+        rankingManager.adicionarScore(iniciais, score);
+        
+        System.out.println(" High score salvo: " + iniciais + " - " + score);
+    }
+    
+    voltarAoMenu();
+}
+
 
     // VERIFICA SE O JOGO ACABOU
-    private void checkGameOver() {
-        for (int col = 0; col < BOARD_WIDTH; col++) {
-            if (board[0][col] != null) {
-                gameOver = true;
-                tempo.stop();
-                System.out.println("🎮 GAME OVER! Pontuação: " + score);
-                break;
+private void checkGameOver() {
+    for (int col = 0; col < BOARD_WIDTH; col++) {
+        if (board[0][col] != null) {
+            gameOver = true;
+            tempo.stop();
+            System.out.println(" GAME OVER! Pontuação: " + score);
+            
+            System.out.println(" Verificando se é high score...");
+            boolean ehHigh = rankingManager.ehHighScore(score);
+            System.out.println(" É high score? " + ehHigh);
+            
+            if (ehHigh) {
+                System.out.println(" Chamando tela de high score...");
+                mostrarTelaHighScore();
+            } else {
+                System.out.println(" Não é high score, voltando ao menu...");
+                JOptionPane.showMessageDialog(this, 
+                    "Game Over!\nPontuação: " + score, 
+                    "Fim de Jogo", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                voltarAoMenu();
             }
+            break;
         }
     }
+}
 
     // LIMPA LINHAS COMPLETAS
     public void clearLines() {
@@ -252,17 +306,19 @@ public class jogo extends JPanel implements KeyListener {
     }
     
     // VOLTAR AO MENU
-    public void voltarAoMenu() {
-        tempo.stop();
-        
-        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+public void voltarAoMenu() {
+    tempo.stop();
+    
+    JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+    if (frame != null) {
         frame.getContentPane().removeAll();
-        frame.add(new menuPrincipal(frame));
+        frame.setContentPane(new menuPrincipal(frame));
         frame.revalidate();
         frame.repaint();
         
         frame.removeKeyListener(this);
     }
+}
 
     // CONTROLES DA PEÇA
     @Override

@@ -6,7 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class menuPrincipal extends JPanel {
-    private JButton btnIniciar, btnSair, btnInstrucoes;
+    private JButton btnIniciar, btnSair, btnInstrucoes, btnRanking;
     private Image backgroundImage;
     
     public menuPrincipal(JFrame janela) {
@@ -27,17 +27,42 @@ public class menuPrincipal extends JPanel {
         espacoTitulo.setPreferredSize(new Dimension(1, 200));
         gbc.insets = new Insets(100, 50, 50, 50);
         add(espacoTitulo, gbc);
-        
+    
         // Botão Iniciar
         btnIniciar = criarBotao8Bit("INICIAR", Color.GREEN);
         btnIniciar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                iniciarJogo(janela);
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(menuPrincipal.this);
+                if (frame != null) {
+                    frame.getContentPane().removeAll();
+                    jogo game = new jogo();
+                    frame.setContentPane(game);
+                    frame.addKeyListener(game);
+                    frame.revalidate();
+                    frame.repaint();
+                    game.requestFocusInWindow();
+                }
             }
         });
         gbc.insets = new Insets(10, 50, 10, 50);
         add(btnIniciar, gbc);
+    
+        // Botão Ranking
+        btnRanking = criarBotao8Bit("RANKING", Color.CYAN);
+        btnRanking.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(menuPrincipal.this);
+                if (frame != null) {
+                    frame.getContentPane().removeAll();
+                    frame.setContentPane(new TelaRanking(frame));
+                    frame.revalidate();
+                    frame.repaint();
+                }
+            }
+        });
+        add(btnRanking, gbc);
         
         // Botão Instruções
         btnInstrucoes = criarBotao8Bit("INSTRUÇÕES", Color.YELLOW);
@@ -58,8 +83,10 @@ public class menuPrincipal extends JPanel {
             }
         });
         add(btnSair, gbc);
-    }
     
+ 
+}
+ 
     private void carregarSprites() {
         try {
             // BACKGROUND COMPLETO
