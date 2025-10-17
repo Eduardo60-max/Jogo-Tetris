@@ -128,18 +128,7 @@ public class menuPrincipal extends JPanel {
             return new Font("Courier New", Font.BOLD, size);
         }
     }
-    
-    private void iniciarJogo(JFrame janela) {
-    janela.getContentPane().removeAll();
-    jogo game = new jogo();
-    janela.setContentPane(game);
-    janela.addKeyListener(game);
-    janela.revalidate();
-    janela.repaint();
-    game.requestFocusInWindow();
-    
-    System.out.println("✅ Jogo iniciado!");
-}
+
     
     private void mostrarInstrucoes() {
         String instrucoes = 

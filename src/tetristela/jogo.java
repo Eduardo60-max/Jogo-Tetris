@@ -13,6 +13,11 @@ import javax.swing.JOptionPane;
 
 public class jogo extends JPanel implements KeyListener {
 
+    private formato proximaShape;
+    private final int INFO_X = BOARD_WIDTH * BLOCK_SIZE + 15;
+    private final int PREVIEW_X = BOARD_WIDTH * BLOCK_SIZE + 25;
+    private final int PREVIEW_Y = 180;
+
     private RankingManager rankingManager = new RankingManager();
 
     public static final int BOARD_WIDTH = 10;
@@ -85,6 +90,7 @@ public class jogo extends JPanel implements KeyListener {
 
         // sorteia a primeira peça
         currentShape = gerarNovaPeca();
+        proximaShape = gerarNovaPeca();
 
         setFocusable(true);
         addKeyListener(this);
@@ -244,13 +250,26 @@ private void checkGameOver() {
         g.setColor(Color.black);
         g.fillRect(0, 0, getWidth(), getHeight());
 
-        // DESENHA INFORMAÇÕES DO JOGO
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 16));
-        g.drawString("Pontuação: " + score, BOARD_WIDTH * BLOCK_SIZE + 10, 30);
-        g.drawString("Linhas: " + linesCleared, BOARD_WIDTH * BLOCK_SIZE + 10, 60);
-        g.drawString("Nível: " + level, BOARD_WIDTH * BLOCK_SIZE + 10, 90);
+        // INFORMAÇÕES DO JOGO
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 16));
+            g.drawString("Pontuação: " + score, INFO_X, 30);
+            g.drawString("Linhas: " + linesCleared, INFO_X, 60);
+            g.drawString("Nível: " + level, INFO_X, 90);
         
+        // PRÉ-VISUALIZAÇÃO
+        if (proximaShape != null && !gameOver) {
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 14));
+            g.drawString("PRÓXIMA:", PREVIEW_X, PREVIEW_Y - 20);
+            desenharPreview(g);
+        }
+        
+        // DESENHA PEÇA FANTASMA
+        if (currentShape != null && !gameOver) {
+            desenharFantasma(g);
+        }
+
         // MENSAGEM DE GAME OVER
         if (gameOver) {
             g.setColor(Color.RED);
@@ -291,20 +310,128 @@ private void checkGameOver() {
         }
     }
 
+    // MÉTODO PARA DESENHAR FANTASMA
+    private void desenharFantasma(Graphics g) {
+        int fantasmaY = calcularPosicaoFantasma();
+        int[][] coords = currentShape.getCoords();
+        Color cor = currentShape.getColor();
+        
+        // Cria cor fantasma (transparente)
+        Color corFantasma = new Color(
+            cor.getRed(), cor.getGreen(), cor.getBlue(), 80 // 80 = 31% de opacidade
+        );
+        
+        g.setColor(corFantasma);
+        for (int row = 0; row < coords.length; row++) {
+            for (int col = 0; col < coords[0].length; col++) {
+                if (coords[row][col] != 0) {
+                    g.fillRect(
+                        (currentShape.getX() + col) * BLOCK_SIZE,
+                        (fantasmaY + row) * BLOCK_SIZE,
+                        BLOCK_SIZE,
+                        BLOCK_SIZE
+                    );
+                    
+                    // Borda fantasma
+                    g.setColor(new Color(255, 255, 255, 50));
+                    g.drawRect(
+                        (currentShape.getX() + col) * BLOCK_SIZE,
+                        (fantasmaY + row) * BLOCK_SIZE,
+                        BLOCK_SIZE,
+                        BLOCK_SIZE
+                    );
+                }
+            }
+        }
+    }
+
+
+    private void desenharPreview(Graphics g) {
+    int[][] coords = proximaShape.getCoords();
+    Color cor = proximaShape.getColor();
+    
+    int tamanhoBlocoPreview = 20;
+    int offsetX = PREVIEW_X + (50 - coords[0].length * tamanhoBlocoPreview) / 2;
+    int offsetY = PREVIEW_Y + (50 - coords.length * tamanhoBlocoPreview) / 2;
+    
+    g.setColor(cor);
+    for (int row = 0; row < coords.length; row++) {
+        for (int col = 0; col < coords[0].length; col++) {
+            if (coords[row][col] != 0) {
+                g.fillRect(
+                    offsetX + col * tamanhoBlocoPreview,
+                    offsetY + row * tamanhoBlocoPreview, 
+                    tamanhoBlocoPreview, 
+                    tamanhoBlocoPreview
+                );
+                
+                // Borda
+                g.setColor(Color.WHITE);
+                g.drawRect(
+                    offsetX + col * tamanhoBlocoPreview,
+                    offsetY + row * tamanhoBlocoPreview,
+                    tamanhoBlocoPreview,
+                    tamanhoBlocoPreview
+                );
+                g.setColor(cor);
+            }
+        }
+    }
+}
+
+    //CALCULA POSIÇÃO DA PEÇA FANTASMA
+    private int calcularPosicaoFantasma() {
+        if (currentShape == null) return currentShape.getY();
+        
+        int fantasmaY = currentShape.getY();
+        int[][] coords = currentShape.getCoords();
+        
+        // Encontra a posição Y onde a peça vai cair
+        while (fantasmaY + coords.length < BOARD_HEIGHT) {
+            if (verificarColisaoFantasma(coords, currentShape.getX(), fantasmaY + 1)) {
+                break;
+            }
+            fantasmaY++;
+        }
+        return fantasmaY;
+    }
+
+    //VERIFICA COLISÃO PARA FANTASMA
+    private boolean verificarColisaoFantasma(int[][] coords, int x, int y) {
+        Color[][] tabuleiro = board;
+        for (int row = 0; row < coords.length; row++) {
+            for (int col = 0; col < coords[0].length; col++) {
+                if (coords[row][col] != 0) {
+                    int boardX = x + col;
+                    int boardY = y + row;
+                    
+                    if (boardY >= BOARD_HEIGHT || boardX < 0 || boardX >= BOARD_WIDTH) {
+                        return true;
+                    }
+                    
+                    if (boardY >= 0 && tabuleiro[boardY][boardX] != null) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public Color[][] getBoard() {
         return board;
     }
 
     // cria nova peça no topo
-    public void setCurrentShape() {
-        currentShape = gerarNovaPeca();
-        
-        // VERIFICA SE NOVA PEÇA PODE SER COLOCADA (GAME OVER)
-        if (currentShape.hasColisao()) {
-            gameOver = true;
-        }
-    }
+public void setCurrentShape() {
+    currentShape = proximaShape;  
+    proximaShape = gerarNovaPeca(); 
     
+    // VERIFICA SE NOVA PEÇA PODE SER COLOCADA (GAME OVER)
+    if (currentShape.hasColisao()) {
+        gameOver = true;
+    }
+}
     // VOLTAR AO MENU
 public void voltarAoMenu() {
     tempo.stop();
