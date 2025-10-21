@@ -8,7 +8,7 @@ public interface PecaDoJogo {
     void update();
     void render(Graphics g);
     void rotacionar();
-    
+
     // Métodos de controle
     void speedUp();
     void speedDown();
@@ -24,4 +24,9 @@ public interface PecaDoJogo {
     // Métodos adicionais essenciais para o jogo e decoradores
     Color getColor();
     void setY(int newY); // Usado para Hard Drop
+
+     // Métodos para o Dominó
+    int[][] getNumerosDomino();  // Matriz de números (0-6)
+    boolean temBucha();          // Verifica se peça tem números iguais
+    int[] getSequencia();        // Retorna sequência de números
 }
