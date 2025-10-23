@@ -64,7 +64,9 @@ public class PowerUpDecorator implements PecaDoJogo {
         this.pecaDecorada = pecaDecorada;
         ativarEfeito(tipoEfeito);
     }
+    
 
+    
     private void ativarEfeito(String tipo) {
         switch (tipo) {
             case "INVERSOR" -> {

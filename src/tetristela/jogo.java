@@ -1,5 +1,5 @@
 package tetristela;
-
+import tetristela.formato;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -20,6 +20,11 @@ import javax.swing.Timer;
 public class jogo extends JPanel implements KeyListener {
 
     private AudioManager audioManager;
+    
+
+    private PecaDoJogo pecaGuardada = null; 
+    private boolean holdUsadoNesteCiclo = false;
+
 
      // SISTEMA DE DURAÇÃO PERSONALIZADA
      private int contadorPecasGeradas = 0;
@@ -225,6 +230,55 @@ public class jogo extends JPanel implements KeyListener {
         return novaPeca;
     }
 
+
+    
+public void guardarPeca() {
+    // 1. Não permite usar o Hold duas vezes na mesma peça
+    if (holdUsadoNesteCiclo) {
+        System.out.println(" Hold já usado neste ciclo.");
+        return;
+    }
+
+    // 2. Marca o Hold como usado
+    holdUsadoNesteCiclo = true;
+
+    // 3. Verifica se o slot Hold está vazio 
+    if (pecaGuardada == null) {
+        // Guarda a peça atual
+        pecaGuardada = currentShape; 
+        
+        
+        currentShape = null; 
+        
+        
+        pecaGuardada.setX(0); 
+        pecaGuardada.setY(0); 
+
+    } else {
+        // 4. Troca a peça atual pela peça guardada
+        PecaDoJogo pecaParaTroca = pecaGuardada;
+        
+        // Guarda a peça atual no slot
+        pecaGuardada = currentShape;
+        
+        // Coloca a peça trocada de volta na posição inicial de queda (topo)
+        pecaParaTroca.setX(4); 
+        pecaParaTroca.setY(0); 
+        
+        // Define a nova peça atual
+        currentShape = pecaParaTroca; 
+        
+        // Zera as coordenadas da peça guardada para exibição
+        pecaGuardada.setX(0); 
+        pecaGuardada.setY(0);
+        
+        System.out.println("🔄 Peça trocada com o Hold.");
+    }
+}
+
+
+
+
     // GERA PEÇA COM SEQUÊNCIA FORÇADA
     private PecaDoJogo gerarPecaSequencia() {
         int i = random.nextInt(shapes.length);
@@ -399,6 +453,11 @@ private void checkGameOver() {
     }
 }
 
+
+
+
+
+
     // LIMPA LINHAS COMPLETAS
 public void clearLines() {
     linhasParaLimpar.clear();
@@ -430,6 +489,11 @@ public void clearLines() {
         calcularBonusDominoBasico();
     }
 }
+
+
+
+
+
 
     // PROCESSAR REMOÇÃO DEPOIS DA ANIMAÇÃO
     
@@ -470,6 +534,10 @@ public void clearLines() {
                 board[0][col] = null;
             }
         }
+
+
+
+
         
         // ADICIONA BÔNUS DAS LINHAS + PONTUAÇÃO NORMAL
         updateScore(linesRemoved);
@@ -548,6 +616,7 @@ public void clearLines() {
             }
         }
     }
+
 
 
     // ATUALIZA PONTUAÇÃO
@@ -886,7 +955,92 @@ private void verificarEAtivarPowerUp() {
 
 
 
+
+public void fixarPeca(PecaDoJogo peca) {
+    
+    // 1. Lógica da PEÇA-BOMBA
+    if ("PEÇA-BOMBA".equals(powerUpAtivo) && pecasComPowerUpRestantes > 0) {
+        
+        // Determina um ponto central aproximado da peça para a explosão
+        int yCentro = peca.getY() + 1; 
+        int xCentro = peca.getX() + peca.getCoords()[0].length / 2; 
+        
+        explodirPecaBomba(yCentro, xCentro);
+        
+        // O contador da Power-Up de Geração/Efeito diminui aqui:
+        pecasComPowerUpRestantes--;
+
+    } else {
+        // 2. Lógica NORMAL: Fixa a peça no tabuleiro
+        
+        BlocoComNumero[][] tabuleiro = getBoard(); // Assumindo que você tem getBoard()
+        
+        // Loop de fixação, similar ao que estava no formato.update()
+        for (int row = 0; row < peca.getCoords().length; row++) {
+            for (int col = 0; col < peca.getCoords()[0].length; col++) {
+                if (peca.getCoords()[row][col] != 0) {
+                    int boardY = peca.getY() + row;
+                    int boardX = peca.getX() + col;
+
+                    if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                        // CRIA BlocoComNumero
+                        tabuleiro[boardY][boardX] = new BlocoComNumero(peca.getColor(), peca.getNumerosDomino()[row][col]);
+                    }
+                }
+            }
+        }
+        
+        // O contador de Power-Up de Comportamento/Geração (se ativo) diminui aqui:
+        if (powerUpAtivo != null) {
+             pecasComPowerUpRestantes--;
+        }
+    }
+    
+      
+
+
+    clearLines(); 
+
+    
+    
+
+
+    setCurrentShape();
+}
+
+
+
+
+
+private void explodirPecaBomba(int yCentro, int xCentro) {
+    int raio = 2; 
+
+    for (int y = yCentro - raio; y <= yCentro + raio; y++) {
+        for (int x = xCentro - raio; x <= xCentro + raio; x++) {
+            
+            if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
+                
+                getBoard()[y][x] = null; // Use 'null' se for um array de objetos
+            }
+        }
+    }
+    
+   
+
+
+    /*aplicarRemovedorDeLixo();*/ 
+    System.out.println("💣 Explosão da Peça-Bomba! Lixo removido.");
+}
+    
+    
+
+
+
+
     // CONTROLES DA PEÇA
+
+    
+
     @Override
     public void keyPressed(KeyEvent e) {
         if (gameOver) {
@@ -907,6 +1061,9 @@ private void verificarEAtivarPowerUp() {
             case KeyEvent.VK_SPACE -> {
             System.out.println(" Hard Drop acionado!");
             currentShape.hardDrop();
+
+
+
         }
 
           // CONTROLES DE VOLUME DURANTE O JOGO
@@ -914,15 +1071,24 @@ private void verificarEAtivarPowerUp() {
         case KeyEvent.VK_PLUS, KeyEvent.VK_EQUALS -> audioManager.aumentarVolume();
         case KeyEvent.VK_MINUS -> audioManager.diminuirVolume();
 
-            /*  TECLAS DE TESTE PARA POWER-UPS 
+            /*  TECLAS DE TESTE PARA POWER-UPS */
         case KeyEvent.VK_1 -> aplicarPowerUp("DOMINO_DOURADO");
         case KeyEvent.VK_2 -> aplicarPowerUp("SEQUENCIA_PERFEITA");
         case KeyEvent.VK_3 -> aplicarPowerUp("TETRIS_ABENÇOADO");
         case KeyEvent.VK_4 -> aplicarPowerUp("INVERSOR");
         case KeyEvent.VK_5 -> aplicarPowerUp("SUPER_ROTACAO");
-        case KeyEvent.VK_6 -> aplicarPowerUp("PESADELO_NUMERICO");*/
+        case KeyEvent.VK_6 -> aplicarPowerUp("PESADELO_NUMERICO");
         }
     }
+    
+
+   /*  @Override
+public void keyPressed(KeyEvent e) {
+    if (e.getKeyCode() == KeyEvent.VK_SHIFT) { 
+        jogo.guardarPeca(); 
+    }*/
+
+
 
     @Override
     public void keyReleased(KeyEvent e) {

@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
 import static tetristela.jogo.*;
 
 public class formato implements PecaDoJogo {
@@ -57,7 +56,7 @@ public class formato implements PecaDoJogo {
     public int[][] getNumerosDomino() {
         return numerosDomino;
     }
-
+    
     @Override
     public boolean temBucha() {
         Map<Integer, Integer> contagem = new HashMap<>();
@@ -116,7 +115,9 @@ public class formato implements PecaDoJogo {
     public int getY() {
         return y;
     }
+  
 
+    
     // ROTACIONA A PEÇA
 public void rotacionar() {
     int[][] novaCoords = new int[coords[0].length][coords.length];
@@ -246,6 +247,7 @@ public void rotacionar() {
         }
     }
 }
+
 
 // HARD DROP: Cai até o fundo instantaneamente
     @Override
