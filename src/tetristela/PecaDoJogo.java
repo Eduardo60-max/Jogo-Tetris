@@ -14,6 +14,7 @@ public interface PecaDoJogo {
     void speedDown();
     void moverDi();
     void moverEs();
+    void hardDrop();
     
     // Métodos de estado/info
     boolean hasColisao();

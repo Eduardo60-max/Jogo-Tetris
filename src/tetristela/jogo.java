@@ -19,6 +19,8 @@ import javax.swing.JOptionPane;
 
 public class jogo extends JPanel implements KeyListener {
 
+    private AudioManager audioManager;
+
      // SISTEMA DE DURAÇÃO PERSONALIZADA
     private int pecasComPowerUpRestantes = 0;
     private String powerUpAtivo = null;
@@ -104,6 +106,9 @@ public class jogo extends JPanel implements KeyListener {
             {1,1,1,1}
         }, this, colors[6]);
 
+        // INICIALIZAR AUDIO MANAGER
+        audioManager = new AudioManager();
+
         // CONFIGURA DURAÇÃO DE CADA POWER-UP (BALANCEAMENTO)
         duracaoPowerUps.put("DOMINO_DOURADO", 4);      // 🟡 MÉDIO - buchas são boas
         duracaoPowerUps.put("SEQUENCIA_PERFEITA", 5);  // 🟢 FRACO - sequências são situacionais  
@@ -127,6 +132,11 @@ public class jogo extends JPanel implements KeyListener {
             repaint();
         });
         tempo.start();
+
+        // INICIAR MÚSICA
+        if (audioManager != null) {
+            audioManager.iniciarMusicaGameplay();
+        }
     }
 
     // gera uma nova peça aleatória
@@ -365,6 +375,9 @@ private void checkGameOver() {
             tempo.stop();
             System.out.println(" GAME OVER! Pontuação: " + score);
             
+            // TOCAR SFX DE GAME OVER
+            audioManager.tocarGameOver();
+
             System.out.println(" Verificando se é high score...");
             boolean ehHigh = rankingManager.ehHighScore(score);
             System.out.println(" É high score? " + ehHigh);
@@ -774,10 +787,21 @@ public void setCurrentShape() {
     }
 }
 
+public void iniciarMusica() {
+    if (audioManager != null) {
+        audioManager.iniciarMusicaGameplay();
+    }
+}
+
     // VOLTAR AO MENU
 public void voltarAoMenu() {
     tempo.stop();
     
+    // PARAR MÚSICA AO VOLTAR AO MENU
+    if (audioManager != null) {
+        audioManager.pararMusica();
+    }
+
     JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
     if (frame != null) {
         frame.getContentPane().removeAll();
@@ -807,6 +831,16 @@ public void voltarAoMenu() {
             case KeyEvent.VK_LEFT -> currentShape.moverEs();
             case KeyEvent.VK_UP -> currentShape.rotacionar();
             case KeyEvent.VK_ESCAPE -> voltarAoMenu();
+            case KeyEvent.VK_SPACE -> {
+            System.out.println("🚀 Hard Drop acionado!");
+            currentShape.hardDrop();
+        }
+
+          // CONTROLES DE VOLUME DURANTE O JOGO
+        case KeyEvent.VK_M -> audioManager.toggleMute();
+        case KeyEvent.VK_PLUS, KeyEvent.VK_EQUALS -> audioManager.aumentarVolume();
+        case KeyEvent.VK_MINUS -> audioManager.diminuirVolume();
+
             // TECLAS DE TESTE PARA POWER-UPS (Remover depois)
         case KeyEvent.VK_1 -> aplicarPowerUp("DOMINO_DOURADO");
         case KeyEvent.VK_2 -> aplicarPowerUp("SEQUENCIA_PERFEITA");

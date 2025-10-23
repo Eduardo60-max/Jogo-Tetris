@@ -29,8 +29,8 @@ public class PowerUpDecorator implements PecaDoJogo {
         Color corOriginal = pecaDecorada.getColor();
         
         if (dominoDouradoAtivo) {
-            // EFEITO DOURADO - amarelo brilhante
-            return new Color(255, 215, 0); // 🟡 OURO
+            // EFEITO DOURADO - Laranja flamejante
+            return new Color(255, 100, 0); // 🟠 LARANJA FLAMEJANTE
         }
         else if (sequenciaPerfeitaAtivo) {
             // EFEITO SEQUÊNCIA - rosa choque 
@@ -145,6 +145,11 @@ public class PowerUpDecorator implements PecaDoJogo {
         }
     }
 
+    @Override
+    public void hardDrop() {
+        pecaDecorada.hardDrop();
+    }
+    
     @Override
     public void rotacionar() {
         // PESADELO NUMÉRICO: Aleatoriza ANTES da rotação

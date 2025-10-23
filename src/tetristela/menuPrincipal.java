@@ -8,10 +8,12 @@ import java.awt.event.ActionListener;
 public class menuPrincipal extends JPanel {
     private JButton btnIniciar, btnSair, btnInstrucoes, btnRanking;
     private Image backgroundImage;
+
     
     public menuPrincipal(JFrame janela) {
         setLayout(new GridBagLayout());
         setBackground(Color.BLACK);
+
         
         // CARREGA BACKGROUND
         carregarSprites();
@@ -73,6 +75,7 @@ public class menuPrincipal extends JPanel {
             }
         });
         add(btnInstrucoes, gbc);
+
         
         // Botão Sair
         btnSair = criarBotao8Bit("SAIR", Color.RED);
@@ -133,15 +136,32 @@ public class menuPrincipal extends JPanel {
     private void mostrarInstrucoes() {
         String instrucoes = 
             "🎮 CONTROLES DO TETRIS:\n\n" +
-            "← SETA ESQUERDA: Mover para esquerda\n" +
-            "→ SETA DIREITA: Mover para direita\n" +
+            "← → SETAS: Mover para esquerda/direita\n" +
+            "↑ SETA CIMA: Rotacionar peça\n" + 
             "↓ SETA BAIXO: Acelerar queda\n" +
-            "↑ SETA CIMA: Rotacionar peça\n" +
+            "BARRA DE ESPAÇO: Hard Drop (queda instantânea)\n" +
             "ESC: Voltar ao menu\n\n" +
-            "OBJETIVO:\n" +
+
+            "🔊 CONTROLES DE ÁUDIO:\n" +
+            "M: Mute/Unmute durante o jogo\n" +
+            "+: Aumentar volume\n" +
+            "-: Diminuir volume\n\n" +
+            
+            "🎲 SISTEMA DE DOMINÓ:\n" +
+            "• 🎲 BUCHA: Números iguais = +50-100 pontos\n" +
+            "• 🎯 SEQUÊNCIA: Números em ordem = +75-150 pontos\n" +
+            "• 💰 COMBO: Bucha + Sequência = BÔNUS MÁXIMO!\n\n" +
+            
+            "🔮 POWER-UPS (Ativação no jogo):\n" +
+            "• Diferentes efeitos especiais serão\n" +
+            "• Ativados misteriosamente durante o jogo!\n\n" +
+            "• Podem tanto ajudar como atrapalhar o jogador!\n" +
+            
+            "🎯 OBJETIVO:\n" +
             "• Complete linhas horizontais\n" +
-            "• Cada linha vale pontos\n" +
-            "• Evite que as peças cheguem ao topo!";
+            "• Use buchas e sequências para pontos extras\n" +
+            "• Evite que as peças cheguem ao topo!" +
+            "• Consiga o máximo de pontos e entre no Ranking!\n";
         
         JOptionPane.showMessageDialog(this, instrucoes, "Instruções", JOptionPane.INFORMATION_MESSAGE);
     }

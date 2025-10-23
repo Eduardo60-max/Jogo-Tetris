@@ -247,6 +247,21 @@ public void rotacionar() {
     }
 }
 
+// HARD DROP: Cai até o fundo instantaneamente
+    @Override
+    public void hardDrop() {
+        System.out.println("🚀 Hard Drop acionado!");
+        
+        // Encontra a posição Y mais baixa possível
+        while (!colideAbaixo()) {
+            y++;
+        }
+        
+        // Força colisão imediata
+        colisao = true;
+        System.out.println("📍 Peça caiu para Y=" + y);
+    }
+
 
     // controles de velocidade e movimento
     public void speedUp() { 
