@@ -1,10 +1,10 @@
 package tetristela;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.util.Arrays;
 import java.util.Random;
-import java.awt.Font;
 
 
 public class PowerUpDecorator implements PecaDoJogo {
@@ -13,16 +13,20 @@ public class PowerUpDecorator implements PecaDoJogo {
 
     private static final Random rand = new Random(); 
 
-    // Flags para gerenciar os diferentes Power-Ups ativos
-    //DEBUFFS (flags de power-Ups que atrapalham o jogo)
+    
     private boolean inversoAtivo = false;
     private boolean superRotacaoAtivo = false;
     private boolean pesadeloNumericoAtivo = false;
-    //BUFFS (flags de power-Ups que ajudam o jogo)
+    
     private boolean dominoDouradoAtivo = false;
     private boolean sequenciaPerfeitaAtivo = false;
     private boolean tetrisAbencoadoAtivo = false;
-    // Adicione mais flags aqui, se necessário
+   
+
+
+    public PecaDoJogo getPecaDecorada() {
+    return pecaDecorada;
+}
 
     // ADICIONA CORES ESPECIAIS PARA POWER-UPS
     private Color getCorComEfeito() {
@@ -30,27 +34,27 @@ public class PowerUpDecorator implements PecaDoJogo {
         
         if (dominoDouradoAtivo) {
             // EFEITO DOURADO - Laranja flamejante
-            return new Color(255, 100, 0); // 🟠 LARANJA FLAMEJANTE
+            return new Color(255, 100, 0); 
         }
         else if (sequenciaPerfeitaAtivo) {
             // EFEITO SEQUÊNCIA - rosa choque 
-            return new Color(255, 105, 180); // 💗 ROSA CHOQUE - sequência
+            return new Color(255, 105, 180); 
         }
         else if (inversoAtivo) {
             // EFEITO INVERSOR - vermelho
-            return new Color(255, 0, 0); // 🔴 VERMELHO
+            return new Color(255, 0, 0); 
         }
         else if (superRotacaoAtivo) {
             // EFEITO SUPER ROTAÇÃO - azul
-            return new Color(0, 0, 255); // 🔵 AZUL
+            return new Color(0, 0, 255); 
         }
         else if (tetrisAbencoadoAtivo) {
             // EFEITO TETRISABENCOADO - verde brilhante
-            return new Color(0, 255, 0); // 🟢 VERDE BRILHANTE
+            return new Color(0, 255, 0); 
         }
         else if (pesadeloNumericoAtivo) {
             // EFEITO PESADELO NUMERICO - roxo sombrio
-            return new Color(128, 0, 128); // 🟣 ROXO SOMBRIO
+            return new Color(128, 0, 128); 
         }
         
         return corOriginal; // Cor normal

@@ -11,17 +11,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import javax.swing.JPanel;
-import javax.swing.Timer;
-import javax.swing.SwingUtilities;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 public class jogo extends JPanel implements KeyListener {
 
     private AudioManager audioManager;
 
      // SISTEMA DE DURAÇÃO PERSONALIZADA
+     private int contadorPecasGeradas = 0;
     private int pecasComPowerUpRestantes = 0;
     private String powerUpAtivo = null;
     private Map<String, Integer> duracaoPowerUps = new HashMap<>();
@@ -416,7 +417,7 @@ public void clearLines() {
         
         if (lineComplete) {
             linhasParaLimpar.add(row);
-            System.out.println("✅ Linha " + row + " completa! Adicionada para limpeza.");
+            System.out.println(" Linha " + row + " completa! Adicionada para limpeza.");
         }
     }
     
@@ -705,11 +706,12 @@ public void clearLines() {
 
     //CALCULA POSIÇÃO DA PEÇA FANTASMA
     private int calcularPosicaoFantasma() {
-        if (currentShape == null) return currentShape.getY();
-        
+        // Se não há peça atual, retorna 0 como posição segura (não desenhar fantasma)
+        if (currentShape == null) return 0;
+
         int fantasmaY = currentShape.getY();
         int[][] coords = currentShape.getCoords();
-        
+
         // Encontra a posição Y onde a peça vai cair
         while (fantasmaY + coords.length < BOARD_HEIGHT) {
             if (verificarColisaoFantasma(coords, currentShape.getX(), fantasmaY + 1)) {
@@ -748,6 +750,14 @@ public void clearLines() {
 
     // cria nova peça no topo
 public void setCurrentShape() {
+
+    
+
+
+
+
+
+
     // Processa a peça atual (que já tem power-up se aplicável)
     currentShape = proximaShape;
     
@@ -755,26 +765,43 @@ public void setCurrentShape() {
     if (pecasComPowerUpRestantes > 0) {
         System.out.println("🔮 Power-up ativo: " + powerUpAtivo + " | Restantes: " + pecasComPowerUpRestantes);
         
-        // SE A PEÇA ATUAL NÃO TEM POWER-UP, APLICA
+          
+
+
         if (!(currentShape instanceof PowerUpDecorator)) {
+            // Se você usar a fábrica
             currentShape = new PowerUpDecorator(currentShape, powerUpAtivo);
             System.out.println("🎯 Power-up aplicado na peça atual!");
         }
         
         // REDUZ CONTADOR APÓS USAR ESTA PEÇA
         pecasComPowerUpRestantes--;
-        System.out.println("📉 Peças restantes: " + pecasComPowerUpRestantes);
+        System.out.println(" Peças restantes: " + pecasComPowerUpRestantes);
         
-        // PREPARA PRÓXIMA PEÇA (com ou sem power-up)
+        // PREPARA PRÓXIMA PEÇA 
         if (pecasComPowerUpRestantes > 0) {
             // Ainda tem power-up ativo - gera peça especial
             proximaShape = gerarPecaComPowerUp();
             System.out.println("🔮 Próxima peça COM power-up");
+
+        
+        
+
         } else {
-            // Power-up acabou - volta ao normal
+            //unwrapping
+            
+            // 1. Remove o PowerUpDecorator da peça atual (que acabou de cair)
+            if (currentShape instanceof PowerUpDecorator) {
+                // Usa o método getPecaDecorada() para pegar a base
+                PowerUpDecorator decorator = (PowerUpDecorator) currentShape;
+                currentShape = decorator.getPecaDecorada();
+                System.out.println(" Peça atual DESENVOLVIDA (efeito Power-Up removido).");
+            }
+            
+            // 2. Volta ao estado normal
             proximaShape = gerarNovaPeca();
             powerUpAtivo = null;
-            System.out.println("⏰ Power-up acabou! Voltando ao normal.");
+            System.out.println(" Power-up acabou! Voltando ao normal.");
         }
     } else {
         // SEM POWER-UP - GERA PEÇA NORMAL
@@ -785,6 +812,13 @@ public void setCurrentShape() {
     if (currentShape.hasColisao()) {
         gameOver = true;
     }
+
+
+    verificarEAtivarPowerUp();
+       
+
+
+        
 }
 
 public void iniciarMusica() {
@@ -813,6 +847,45 @@ public void voltarAoMenu() {
     }
 }
 
+
+
+//sorteio de power up
+private void verificarEAtivarPowerUp() {
+    
+    contadorPecasGeradas++;
+    
+    
+
+    
+    if (contadorPecasGeradas >= 10 && powerUpAtivo == null) {
+        
+        System.out.println("🚨 Condição de 10 peças atingida. Sorteando Power-Up...");
+
+        
+        List<String> powerUpList = Arrays.asList(
+            "DOMINO_DOURADO",
+            "SEQUENCIA_PERFEITA",
+            "TETRIS_ABENÇOADO",
+            "INVERSOR",
+            "SUPER_ROTACAO",
+            "PESADELO_NUMERICO"
+        );
+        
+        String powerUpSorteado = powerUpList.get(random.nextInt(powerUpList.size()));
+        
+        System.out.println("✨ Power-Up sorteado: " + powerUpSorteado);
+
+        
+        aplicarPowerUp(powerUpSorteado);
+        
+        
+        contadorPecasGeradas = 0;
+    } 
+}
+
+
+
+
     // CONTROLES DA PEÇA
     @Override
     public void keyPressed(KeyEvent e) {
@@ -832,7 +905,7 @@ public void voltarAoMenu() {
             case KeyEvent.VK_UP -> currentShape.rotacionar();
             case KeyEvent.VK_ESCAPE -> voltarAoMenu();
             case KeyEvent.VK_SPACE -> {
-            System.out.println("🚀 Hard Drop acionado!");
+            System.out.println(" Hard Drop acionado!");
             currentShape.hardDrop();
         }
 
@@ -841,13 +914,13 @@ public void voltarAoMenu() {
         case KeyEvent.VK_PLUS, KeyEvent.VK_EQUALS -> audioManager.aumentarVolume();
         case KeyEvent.VK_MINUS -> audioManager.diminuirVolume();
 
-            // TECLAS DE TESTE PARA POWER-UPS (Remover depois)
+            /*  TECLAS DE TESTE PARA POWER-UPS 
         case KeyEvent.VK_1 -> aplicarPowerUp("DOMINO_DOURADO");
         case KeyEvent.VK_2 -> aplicarPowerUp("SEQUENCIA_PERFEITA");
         case KeyEvent.VK_3 -> aplicarPowerUp("TETRIS_ABENÇOADO");
         case KeyEvent.VK_4 -> aplicarPowerUp("INVERSOR");
         case KeyEvent.VK_5 -> aplicarPowerUp("SUPER_ROTACAO");
-        case KeyEvent.VK_6 -> aplicarPowerUp("PESADELO_NUMERICO");
+        case KeyEvent.VK_6 -> aplicarPowerUp("PESADELO_NUMERICO");*/
         }
     }
 
