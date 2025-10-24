@@ -139,6 +139,7 @@ public class menuPrincipal extends JPanel {
             "← → SETAS: Mover para esquerda/direita\n" +
             "↑ SETA CIMA: Rotacionar peça\n" + 
             "↓ SETA BAIXO: Acelerar queda\n" +
+            "SHIFT: Hold Piece (Guardar peça)\n" +
             "BARRA DE ESPAÇO: Hard Drop (queda instantânea)\n" +
             "ESC: Voltar ao menu\n\n" +
 

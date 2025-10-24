@@ -1,5 +1,4 @@
 package tetristela;
-import tetristela.formato;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -18,6 +17,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 public class jogo extends JPanel implements KeyListener {
+
+    private boolean debugPowerUpMostrado = false;
+    private String ultimoPowerUpDebug = "";
 
     private AudioManager audioManager;
     
@@ -235,7 +237,7 @@ public class jogo extends JPanel implements KeyListener {
 public void guardarPeca() {
     // 1. Não permite usar o Hold duas vezes na mesma peça
     if (holdUsadoNesteCiclo) {
-        System.out.println(" Hold já usado neste ciclo.");
+        System.out.println("❌ Hold já usado neste ciclo.");
         return;
     }
 
@@ -247,12 +249,17 @@ public void guardarPeca() {
         // Guarda a peça atual
         pecaGuardada = currentShape; 
         
+        // Pega a próxima peça como atual
+        currentShape = proximaShape;
         
-        currentShape = null; 
+        // Gera nova próxima peça
+        proximaShape = gerarNovaPeca();
         
-        
+        // Zera as coordenadas da peça guardada para exibição
         pecaGuardada.setX(0); 
-        pecaGuardada.setY(0); 
+        pecaGuardada.setY(0);
+        
+        System.out.println("💾 Peça guardada no Hold.");
 
     } else {
         // 4. Troca a peça atual pela peça guardada
@@ -273,6 +280,12 @@ public void guardarPeca() {
         pecaGuardada.setY(0);
         
         System.out.println("🔄 Peça trocada com o Hold.");
+    }
+    
+    // Reseta posição da peça atual para o topo
+    if (currentShape != null) {
+        currentShape.setX(4);
+        currentShape.setY(0);
     }
 }
 
@@ -369,25 +382,47 @@ public void guardarPeca() {
 
   private void update() {
     if (gameOver) {
-
         if (rankingManager.ehHighScore(score)) {
             mostrarTelaHighScore();
         }
         return;
     }
 
-    // DEBUG: Verifica se currentShape é PowerUpDecorator
-    if (currentShape instanceof PowerUpDecorator) {
-        System.out.println("⚡ PowerUpDecorator ativo no update!");
+    // SE ESTÁ ANIMANDO LINHA, PROCESSA ANIMAÇÃO
+    if (animandoLinha) {
+        processarAnimacaoLinha();
+        return; // Pausa o jogo durante animação
     }
 
-    if (currentShape == null) {
-        return;
+    // DEBUG: Verifica se currentShape é PowerUpDecorator
+    if (currentShape instanceof PowerUpDecorator) {
+        if (!debugPowerUpMostrado || !powerUpAtivo.equals(ultimoPowerUpDebug)) {
+            System.out.println("⚡ Power-Up Ativo: " + powerUpAtivo);
+            debugPowerUpMostrado = true;
+            ultimoPowerUpDebug = powerUpAtivo;
+        }
+    } else {
+        debugPowerUpMostrado = false;
+        ultimoPowerUpDebug = "";
     }
 
     currentShape.update();
     
     checkGameOver();
+}
+
+
+
+private void processarAnimacaoLinha() {
+    frameAnimacao++;
+    
+    // DURAÇÃO DA ANIMAÇÃO
+    if (frameAnimacao >= 45) {
+        // FINALIZA ANIMAÇÃO E REMOVE AS LINHAS
+        animandoLinha = false;
+        frameAnimacao = 0;
+        processarRemocaoLinhas();
+    }
 }
 
 private void mostrarTelaHighScore() {
@@ -467,7 +502,6 @@ public void clearLines() {
         boolean lineComplete = true;
         
         for (int col = 0; col < BOARD_WIDTH; col++) {
-            // VERIFICA SE TEM BLOCO (independente de ter número ou não)
             if (board[row][col] == null) {
                 lineComplete = false;
                 break;
@@ -476,20 +510,21 @@ public void clearLines() {
         
         if (lineComplete) {
             linhasParaLimpar.add(row);
-            System.out.println(" Linha " + row + " completa! Adicionada para limpeza.");
+            System.out.println("⭐ Linha " + row + " completa! Adicionada para animação.");
         }
     }
     
-    // SE TEM LINHAS, PROCESSAR
+    // SE TEM LINHAS, INICIA ANIMAÇÃO
     if (!linhasParaLimpar.isEmpty()) {
-        System.out.println("🧹 Processando " + linhasParaLimpar.size() + " linhas...");
-        processarRemocaoLinhas();
+        System.out.println("🎬 Iniciando animação para " + linhasParaLimpar.size() + " linhas...");
+        animandoLinha = true;
+        frameAnimacao = 0;
+        
     } else {
         System.out.println("❌ Nenhuma linha completa encontrada.");
         calcularBonusDominoBasico();
     }
 }
-
 
 
 
@@ -631,78 +666,188 @@ public void clearLines() {
 
     // desenha o tabuleiro e a peça atual
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
 
-        // fundo preto
-        g.setColor(Color.black);
-        g.fillRect(0, 0, getWidth(), getHeight());
+    // fundo preto
+    g.setColor(Color.black);
+    g.fillRect(0, 0, getWidth(), getHeight());
 
-        // INFORMAÇÕES DO JOGO
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 16));
-            g.drawString("Pontuação: " + score, INFO_X, 30);
-            g.drawString("Linhas: " + linesCleared, INFO_X, 60);
-            g.drawString("Nível: " + level, INFO_X, 90);
+    // INFORMAÇÕES DO JOGO
+    g.setColor(Color.WHITE);
+    g.setFont(new Font("Arial", Font.BOLD, 16));
+    g.drawString("Pontuação: " + score, INFO_X, 30);
+    g.drawString("Linhas: " + linesCleared, INFO_X, 60);
+    g.drawString("Nível: " + level, INFO_X, 90);
+    
+    // PRÉ-VISUALIZAÇÃO
+    if (proximaShape != null && !gameOver) {
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 14));
+        g.drawString("PRÓXIMA:", PREVIEW_X, PREVIEW_Y - 20);
+        desenharPreview(g);
+    }
+    
+    // DESENHA PEÇA FANTASMA
+    if (currentShape != null && !gameOver) {
+        desenharFantasma(g);
+    }
+
+    // Desenha peça guardada
+    if (pecaGuardada != null && !gameOver) {
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 14));
+        g.drawString("GUARDADA:", INFO_X, 350);
         
-        // PRÉ-VISUALIZAÇÃO
-        if (proximaShape != null && !gameOver) {
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 14));
-            g.drawString("PRÓXIMA:", PREVIEW_X, PREVIEW_Y - 20);
-            desenharPreview(g);
+        // Desenha preview da peça guardada
+        int[][] coords = pecaGuardada.getCoords();
+        Color cor = pecaGuardada.getColor();
+        int tamanhoBloco = 20;
+        int offsetX = INFO_X + 10;
+        int offsetY = 380;
+        
+        g.setColor(cor);
+        for (int row = 0; row < coords.length; row++) {
+            for (int col = 0; col < coords[0].length; col++) {
+                if (coords[row][col] != 0) {
+                    g.fillRect(offsetX + col * tamanhoBloco, offsetY + row * tamanhoBloco, 
+                              tamanhoBloco, tamanhoBloco);
+                    g.setColor(Color.WHITE);
+                    g.drawRect(offsetX + col * tamanhoBloco, offsetY + row * tamanhoBloco, 
+                              tamanhoBloco, tamanhoBloco);
+                    g.setColor(cor);
+                }
+            }
+        }
+    }
+
+    // MENSAGEM DE GAME OVER
+    if (gameOver) {
+        g.setColor(Color.RED);
+        g.setFont(new Font("Arial", Font.BOLD, 36));
+        g.drawString("GAME OVER", 50, BOARD_HEIGHT * BLOCK_SIZE / 2);
+        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.drawString("Pontuação Final: " + score, 70, BOARD_HEIGHT * BLOCK_SIZE / 2 + 40);
+        g.drawString("Pressione ESC para voltar", 40, BOARD_HEIGHT * BLOCK_SIZE / 2 + 80);
+        return;
+    }
+
+    // 🎬 VERIFICA SE ESTÁ ANIMANDO LINHAS
+    if (animandoLinha) {
+        // MODO ANIMAÇÃO: desenha tudo exceto as linhas sendo animadas
+        for (int row = 0; row < BOARD_HEIGHT; row++) {
+            for (int col = 0; col < BOARD_WIDTH; col++) {
+                if (board[row][col] != null && !linhasParaLimpar.contains(row)) {
+                    // Desenha blocos normais (exceto linhas sendo animadas)
+                    g.setColor(board[row][col].cor);
+                    g.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    
+                    // DESENHA NÚMERO NO BLOCO FIXADO
+                    g.setColor(Color.WHITE);
+                    g.setFont(new Font("Arial", Font.BOLD, 12));
+                    String numero = String.valueOf(board[row][col].numero);
+                    g.drawString(numero, 
+                        col * BLOCK_SIZE + BLOCK_SIZE/2 - 4, 
+                        row * BLOCK_SIZE + BLOCK_SIZE/2 + 4
+                    );
+                }
+            }
         }
         
-        // DESENHA PEÇA FANTASMA
-        if (currentShape != null && !gameOver) {
-            desenharFantasma(g);
+        // 🎭 DESENHA ANIMAÇÃO NAS LINHAS COMPLETAS
+        for (int linha : linhasParaLimpar) {
+            desenharLinhaPiscante(g, linha);
         }
-
-        // MENSAGEM DE GAME OVER
-        if (gameOver) {
-            g.setColor(Color.RED);
-            g.setFont(new Font("Arial", Font.BOLD, 36));
-            g.drawString("GAME OVER", 50, BOARD_HEIGHT * BLOCK_SIZE / 2);
-            g.setFont(new Font("Arial", Font.BOLD, 18));
-            g.drawString("Pontuação Final: " + score, 70, BOARD_HEIGHT * BLOCK_SIZE / 2 + 40);
-            g.drawString("Pressione ESC para voltar", 40, BOARD_HEIGHT * BLOCK_SIZE / 2 + 80);
-            return;
-        }
-
+        
+    } else {
+        // MODO NORMAL: desenha tudo normalmente
         // desenha peças que ta no tabuleiro
         for (int row = 0; row < BOARD_HEIGHT; row++) {
+            for (int col = 0; col < BOARD_WIDTH; col++) {
+                if (board[row][col] != null) {
+                    // USA BlocoComNumero
+                    g.setColor(board[row][col].cor);
+                    g.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    
+                    // DESENHA NÚMERO NO BLOCO FIXADO
+                    g.setColor(Color.WHITE);
+                    g.setFont(new Font("Arial", Font.BOLD, 12));
+                    String numero = String.valueOf(board[row][col].numero);
+                    g.drawString(numero, 
+                        col * BLOCK_SIZE + BLOCK_SIZE/2 - 4, 
+                        row * BLOCK_SIZE + BLOCK_SIZE/2 + 4
+                    );
+                }
+            }
+        }
+    }
+
+    // desenha a peça atual (em ambos os modos)
+    if (currentShape != null){ 
+        currentShape.render(g);
+    }
+
+    // desenha a grade
+    g.setColor(Color.GRAY);
+    for (int row = 0; row < BOARD_HEIGHT; row++) {
+        g.drawLine(0, row * BLOCK_SIZE, BOARD_WIDTH * BLOCK_SIZE, row * BLOCK_SIZE);
+    }
+    for (int col = 0; col <= BOARD_WIDTH; col++) {
+        g.drawLine(col * BLOCK_SIZE, 0, col * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE);
+    }
+}
+
+    private void desenharLinhaPiscante(Graphics g, int linha) {
+    // EFEITO PISCANTE - alterna entre branco e preto
+    boolean piscando = (frameAnimacao / 5) % 2 == 0; // Muda a cada 5 frames
+    
+    if (piscando) {
+        // FASE BRANCA - linha brilha
+        g.setColor(new Color(255, 255, 255, 150)); // Branco semi-transparente
+    } else {
+        // FASE PRETA - linha escurece
+        g.setColor(new Color(0, 0, 0, 150)); // Preto semi-transparente
+    }
+    
+    // DESENHA RETÂNGULO SOBRE A LINHA INTEIRA
+    g.fillRect(0, linha * BLOCK_SIZE, BOARD_WIDTH * BLOCK_SIZE, BLOCK_SIZE);
+    
+    // EFEITO DE "EXPANSÃO" - borda colorida que cresce
+    int progresso = frameAnimacao;
+    int maxProgresso = 30;
+    float percentual = (float) progresso / maxProgresso;
+    
+    // CORES DO ARCO-ÍRIS QUE MUDAM COM O TEMPO
+    Color[] coresArcoIris = {
+        Color.RED, Color.ORANGE, Color.YELLOW, 
+        Color.GREEN, Color.CYAN, Color.BLUE, Color.MAGENTA
+    };
+    Color corBorda = coresArcoIris[(frameAnimacao / 4) % coresArcoIris.length];
+    
+    // BORDA QUE CRESCE VERTICALMENTE
+    int alturaBorda = (int) (BLOCK_SIZE * percentual);
+    g.setColor(corBorda);
+    g.fillRect(0, linha * BLOCK_SIZE, BOARD_WIDTH * BLOCK_SIZE, alturaBorda);
+    g.fillRect(0, (linha + 1) * BLOCK_SIZE - alturaBorda, 
+               BOARD_WIDTH * BLOCK_SIZE, alturaBorda);
+    
+    // DESENHA OS BLOCOS ORIGINAIS DA LINHA (sobre a animação)
     for (int col = 0; col < BOARD_WIDTH; col++) {
-        if (board[row][col] != null) {
-            // USA BlocoComNumero
-            g.setColor(board[row][col].cor);
-            g.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        if (board[linha][col] != null) {
+            g.setColor(board[linha][col].cor);
+            g.fillRect(col * BLOCK_SIZE, linha * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
             
-            // DESENHA NÚMERO NO BLOCO FIXADO
+            // Número do bloco
             g.setColor(Color.WHITE);
             g.setFont(new Font("Arial", Font.BOLD, 12));
-            String numero = String.valueOf(board[row][col].numero);
+            String numero = String.valueOf(board[linha][col].numero);
             g.drawString(numero, 
                 col * BLOCK_SIZE + BLOCK_SIZE/2 - 4, 
-                row * BLOCK_SIZE + BLOCK_SIZE/2 + 4
+                linha * BLOCK_SIZE + BLOCK_SIZE/2 + 4
             );
         }
     }
 }
-
-        // desenha a peça atual
-        if (currentShape != null){ 
-			currentShape.render(g);
-		 }
-
-        // desenha a grade
-        g.setColor(Color.GRAY);
-        for (int row = 0; row < BOARD_HEIGHT; row++) {
-            g.drawLine(0, row * BLOCK_SIZE, BOARD_WIDTH * BLOCK_SIZE, row * BLOCK_SIZE);
-        }
-        for (int col = 0; col <= BOARD_WIDTH; col++) {
-            g.drawLine(col * BLOCK_SIZE, 0, col * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE);
-        }
-    }
 
     // MÉTODO PARA DESENHAR FANTASMA
     private void desenharFantasma(Graphics g) {
@@ -820,12 +965,9 @@ public void clearLines() {
     // cria nova peça no topo
 public void setCurrentShape() {
 
-    
 
-
-
-
-
+    // Reseta o hold para a próxima peça
+    holdUsadoNesteCiclo = false;
 
     // Processa a peça atual (que já tem power-up se aplicável)
     currentShape = proximaShape;
@@ -1058,6 +1200,7 @@ private void explodirPecaBomba(int yCentro, int xCentro) {
             case KeyEvent.VK_LEFT -> currentShape.moverEs();
             case KeyEvent.VK_UP -> currentShape.rotacionar();
             case KeyEvent.VK_ESCAPE -> voltarAoMenu();
+            case KeyEvent.VK_SHIFT -> guardarPeca(); // Shift para Hold
             case KeyEvent.VK_SPACE -> {
             System.out.println(" Hard Drop acionado!");
             currentShape.hardDrop();
@@ -1081,12 +1224,6 @@ private void explodirPecaBomba(int yCentro, int xCentro) {
         }
     }
     
-
-   /*  @Override
-public void keyPressed(KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_SHIFT) { 
-        jogo.guardarPeca(); 
-    }*/
 
 
 

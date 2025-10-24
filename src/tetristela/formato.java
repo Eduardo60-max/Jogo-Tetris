@@ -283,4 +283,9 @@ public void rotacionar() {
     public boolean hasColisao() {
         return colisao;
     }
+
+    @Override
+    public void setX(int newX) {
+        this.x = newX;
+    }
 }

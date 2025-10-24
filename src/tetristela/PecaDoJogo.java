@@ -26,6 +26,8 @@ public interface PecaDoJogo {
     Color getColor();
     void setY(int newY); // Usado para Hard Drop
 
+    void setX(int newX);
+
      // Métodos para o Dominó
     int[][] getNumerosDomino();  // Matriz de números (0-6)
     boolean temBucha();          // Verifica se peça tem números iguais

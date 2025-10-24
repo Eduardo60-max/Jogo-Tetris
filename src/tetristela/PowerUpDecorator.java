@@ -97,6 +97,11 @@ public class PowerUpDecorator implements PecaDoJogo {
         }
     }
 
+    @Override 
+    public void setX(int newX) { 
+        pecaDecorada.setX(newX); 
+    }
+
     // MÉTODOS DE DOMINÓ (DELEGAÇÃO ESPECIAL)
     @Override
     public int[][] getNumerosDomino() {
@@ -191,6 +196,7 @@ public class PowerUpDecorator implements PecaDoJogo {
             }
             
             System.out.println("😈 Números aleatorizados!");
+            
         }
         
         // ROTAÇÃO NORMAL
