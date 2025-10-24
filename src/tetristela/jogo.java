@@ -474,7 +474,18 @@ private void checkGameOver() {
             
             if (ehHigh) {
                 System.out.println(" Chamando tela de high score...");
-                mostrarTelaHighScore();
+                
+                // GARANTE QUE A TELA DE GAME OVER FOI DESENHADA
+                SwingUtilities.invokeLater(() -> {
+                    repaint(); // Força o desenho da tela GAME OVER
+                    
+                    // 🆕 ESPERA O FRAME SER PROCESSADO
+                    Timer timer = new Timer(500, e -> {
+                        mostrarTelaHighScore();
+                    });
+                    timer.setRepeats(false);
+                    timer.start();
+                });
             } else {
                 System.out.println(" Não é high score, voltando ao menu...");
                 JOptionPane.showMessageDialog(this, 
