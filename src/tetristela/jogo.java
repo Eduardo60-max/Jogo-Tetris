@@ -115,7 +115,7 @@ public class jogo extends JPanel implements KeyListener {
         }, this, colors[6]);
 
         // INICIALIZAR AUDIO MANAGER
-        audioManager = new AudioManager();
+        audioManager = AudioManager.getInstance();
 
         // CONFIGURA DURAÇÃO DE CADA POWER-UP (BALANCEAMENTO)
         duracaoPowerUps.put("DOMINO_DOURADO", 4);      // 🟡 MÉDIO - buchas são boas
@@ -428,6 +428,8 @@ private void processarAnimacaoLinha() {
 private void mostrarTelaHighScore() {
     tempo.stop();
     
+
+    
     String iniciais = (String) JOptionPane.showInputDialog(
         this,
         " NOVO HIGH SCORE! \n" +
@@ -440,8 +442,9 @@ private void mostrarTelaHighScore() {
         "AAA" 
     );
     
+    // SE O USUÁRIO CANCELAR OU CONFIRMAR, VOLTA AO MENU
+    
     if (iniciais != null && !iniciais.trim().isEmpty()) {
-
         if (iniciais.length() > 3) {
             iniciais = iniciais.substring(0, 3);
         }
@@ -465,7 +468,7 @@ private void checkGameOver() {
             tempo.stop();
             System.out.println(" GAME OVER! Pontuação: " + score);
             
-            // TOCAR SFX DE GAME OVER
+            // TOCAR SFX DE GAME OVER PRIMEIRO
             audioManager.tocarGameOver();
 
             System.out.println(" Verificando se é high score...");
@@ -475,12 +478,12 @@ private void checkGameOver() {
             if (ehHigh) {
                 System.out.println(" Chamando tela de high score...");
                 
-                // GARANTE QUE A TELA DE GAME OVER FOI DESENHADA
+                // ESPERAR O GAME OVER SFX TERMINAR ANTES DE MOSTRAR HIGH SCORE
                 SwingUtilities.invokeLater(() -> {
                     repaint(); // Força o desenho da tela GAME OVER
                     
-                    // 🆕 ESPERA O FRAME SER PROCESSADO
-                    Timer timer = new Timer(500, e -> {
+                    //  ESPERA 2 SEGUNDOS PARA O SFX TERMINAR
+                    Timer timer = new Timer(2000, e -> {
                         mostrarTelaHighScore();
                     });
                     timer.setRepeats(false);
@@ -488,11 +491,16 @@ private void checkGameOver() {
                 });
             } else {
                 System.out.println(" Não é high score, voltando ao menu...");
-                JOptionPane.showMessageDialog(this, 
-                    "Game Over!\nPontuação: " + score, 
-                    "Fim de Jogo", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                voltarAoMenu();
+                // ESPERAR O GAME OVER SFX TERMINAR
+                Timer timer = new Timer(2000, e -> {
+                    JOptionPane.showMessageDialog(this, 
+                        "Game Over!\nPontuação: " + score, 
+                        "Fim de Jogo", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                    voltarAoMenu();
+                });
+                timer.setRepeats(false);
+                timer.start();
             }
             break;
         }

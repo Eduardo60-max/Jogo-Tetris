@@ -5,18 +5,22 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+
 public class menuPrincipal extends JPanel {
     private JButton btnIniciar, btnSair, btnInstrucoes, btnRanking;
     private Image backgroundImage;
+    private boolean imagemCarregada = false;
 
-    
     public menuPrincipal(JFrame janela) {
         setLayout(new GridBagLayout());
         setBackground(Color.BLACK);
 
+        // CARREGA BACKGROUND DO RESOURCE MANAGER
+        ResourceManager resourceManager = ResourceManager.getInstance();
+        backgroundImage = resourceManager.getBackgroundImage();
+        imagemCarregada = resourceManager.isImagemCarregada();
         
-        // CARREGA BACKGROUND
-        carregarSprites();
+        resourceManager.debugRecursos();
         
         // Configura layout
         GridBagConstraints gbc = new GridBagConstraints();
@@ -29,7 +33,7 @@ public class menuPrincipal extends JPanel {
         espacoTitulo.setPreferredSize(new Dimension(1, 200));
         gbc.insets = new Insets(100, 50, 50, 50);
         add(espacoTitulo, gbc);
-    
+
         // Botão Iniciar
         btnIniciar = criarBotao8Bit("INICIAR", Color.GREEN);
         btnIniciar.addActionListener(new ActionListener() {
@@ -49,7 +53,7 @@ public class menuPrincipal extends JPanel {
         });
         gbc.insets = new Insets(10, 50, 10, 50);
         add(btnIniciar, gbc);
-    
+
         // Botão Ranking
         btnRanking = criarBotao8Bit("RANKING", Color.CYAN);
         btnRanking.addActionListener(new ActionListener() {
@@ -76,28 +80,25 @@ public class menuPrincipal extends JPanel {
         });
         add(btnInstrucoes, gbc);
 
-        
         // Botão Sair
         btnSair = criarBotao8Bit("SAIR", Color.RED);
         btnSair.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.exit(0);
+                int resposta = JOptionPane.showConfirmDialog(menuPrincipal.this,
+                    "Você tem certeza que quer sair do Tetris?",
+                    "Sair",
+                    JOptionPane.YES_NO_OPTION);
+                if (resposta == JOptionPane.YES_OPTION) {
+                    // SÓ NO SAIR DO JOGO USA CLEANUP (fecha tudo)
+                    AudioManager.getInstance().cleanup();
+                    System.exit(0);
+                }
             }
         });
         add(btnSair, gbc);
-    
- 
-}
- 
-    private void carregarSprites() {
-        try {
-            // BACKGROUND COMPLETO
-            backgroundImage = new ImageIcon("resources/sprites/fullbackground.png").getImage();
-        } catch (Exception e) {
-            System.out.println("⚠️ Background não carregou: " + e.getMessage());
-        }
     }
+
     
     private JButton criarBotao8Bit(String texto, Color cor) {
         JButton botao = new JButton(texto);
@@ -132,7 +133,6 @@ public class menuPrincipal extends JPanel {
         }
     }
 
-    
     private void mostrarInstrucoes() {
         String instrucoes = 
             "🎮 CONTROLES DO TETRIS:\n\n" +
@@ -168,20 +168,23 @@ public class menuPrincipal extends JPanel {
     }
     
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    
+    // DESENHA BACKGROUND
+    if (imagemCarregada && backgroundImage != null) {
+        System.out.println("🎨 Paint: Desenhando background carregado");
+        g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+    } else {
+        System.out.println("🎨 Paint: Usando fallback - imagemCarregada: " + imagemCarregada + ", backgroundImage: " + (backgroundImage != null));
+        // Fallback
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, getWidth(), getHeight());
         
-        // DESENHA BACKGROUND
-        if (backgroundImage != null) {
-            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-        } else {
-            // Fallback - fundo preto com título texto
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, getWidth(), getHeight());
-            
-            g.setColor(Color.WHITE);
-            g.setFont(load8BitFont(36));
-            g.drawString("TETRIS", 150, 100);
-        }
+        g.setColor(Color.WHITE);
+        g.setFont(load8BitFont(36));
+        g.drawString("TETRIS", 150, 100);
+        g.drawString("(Sem Imagem)", 120, 150);
     }
+}
 }
